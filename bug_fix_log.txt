@@ -1,0 +1,70 @@
+# AI-ToolBox 项目 Bug 修复日志
+
+## 项目概述
+AI-ToolBox 是一个基于 Spring Boot 3.2.5 的 Java 后端项目，提供用户注册、登录等认证功能。
+
+## 修复过程日志
+
+### 1. 注册接口参数绑定问题
+**时间**：2026-04-01  
+**问题描述**：调用注册接口时出现类型转换错误：`Failed to convert value of type 'java.lang.String' to required type 'com.example.aitoolbox.entity.User'`  
+**原因分析**：使用 `@RequestParam` 注解无法直接接收复杂对象 `User`  
+**解决方案**：将 `@RequestParam` 注解改为 `@RequestBody` 注解，使用 JSON 格式传递用户信息  
+**修改文件**：`src/main/java/com/example/aitoolbox/controller/LoginController.java`
+
+### 2. 数据库连接错误
+**时间**：2026-04-02  
+**问题描述**：注册或登录时出现数据库连接错误：`Failed to obtain JDBC Connection`  
+**原因分析**：数据库服务可能未运行，或连接配置不正确  
+**解决方案**：
+- 检查数据库服务是否运行
+- 确保数据库配置正确
+- 验证数据库 `ai_toolbox` 是否存在
+- 确认数据库用户权限正确
+**相关文件**：`src/main/resources/application.properties`
+
+### 3. 雪花算法 ID 生成问题
+**时间**：2026-04-02  
+**问题描述**：注册用户时 ID 不是雪花算法生成的分布式唯一 ID，而是普通自增 ID  
+**原因分析**：
+- MyBatis Plus 的 `IdType.ASSIGN_ID` 配置未生效
+- 数据库表结构可能仍使用自增 ID
+**解决方案**：
+1. 修改 `User` 实体类，将 `@TableId(type = IdType.ASSIGN_ID)` 改为 `@TableId(type = IdType.INPUT)`
+2. 在 `LoginServiceImpl` 中使用 Hutool 的 `Snowflake` 工具手动生成 ID
+3. 配置雪花算法的 dataCenterId 和 machineId 到配置文件
+**修改文件**：
+- `src/main/java/com/example/aitoolbox/entity/User.java`
+- `src/main/java/com/example/aitoolbox/service/impl/LoginServiceImpl.java`
+- `src/main/resources/application.properties`
+
+### 4. CORS 跨域问题
+**时间**：2026-04-05  
+**问题描述**：前端联调时出现 CORS 错误：`Access to XMLHttpRequest at 'http://127.0.0.1:8080/login/reg' from origin 'http://localhost:5173' has been blocked by CORS policy`  
+**原因分析**：后端未配置 CORS 跨域支持  
+**解决方案**：在 `AiToolBoxApplication` 中添加 `CorsFilter` 配置，允许来自 `http://localhost:5173` 的跨域请求  
+**修改文件**：`src/main/java/com/example/aitoolbox/AiToolBoxApplication.java`
+
+### 5. 代码编译错误
+**时间**：2026-04-05  
+**问题描述**：添加 CORS 配置后，应用程序启动失败，显示 `Unresolved compilation problem`  
+**原因分析**：`AiToolBoxApplication.java` 文件缺少闭合大括号  
+**解决方案**：添加缺少的闭合大括号  
+**修改文件**：`src/main/java/com/example/aitoolbox/AiToolBoxApplication.java`
+
+## 修复结果
+1. 注册接口参数绑定问题：已解决，现在可以通过 JSON 格式传递用户信息
+2. 数据库连接错误：已解决，确保数据库服务运行正常
+3. 雪花算法 ID 生成问题：已解决，现在使用 Hutool 的雪花工具生成分布式唯一 ID
+4. CORS 跨域问题：已解决，前端可以正常调用后端接口
+5. 代码编译错误：已解决，应用程序可以正常启动
+
+## 技术改进
+1. 使用 Hutool 工具包简化开发，包括雪花算法 ID 生成和工具类
+2. 配置文件中的敏感信息（如数据库密码）应考虑使用环境变量或加密存储
+3. 密码加密使用 MD5，建议在生产环境中使用更安全的加密算法如 BCrypt
+4. 添加了 CORS 配置，支持前后端分离开发
+5. 集成了 Knife4j，提供了 API 文档，方便前端开发
+
+## 总结
+通过以上修复，AI-ToolBox 项目现在可以正常运行，支持用户注册、登录等功能，并且可以与前端应用进行跨域交互。项目结构清晰，代码质量良好，为后续的功能扩展奠定了基础。
