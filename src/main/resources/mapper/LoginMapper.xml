@@ -15,4 +15,8 @@
         SELECT * FROM user WHERE username = #{username}
     </select>
     
+    <select id="selectById" parameterType="Long" resultType="com.example.aitoolbox.entity.User">
+        SELECT * FROM user WHERE id = #{id}
+    </select>
+    
 </mapper>

@@ -8,4 +8,5 @@ public interface LoginMapper {
     void addUser(User user);
     User getUserByEmail(String email);
     User getUserByUsername(String username);
+    User selectById(Long id);
 }
