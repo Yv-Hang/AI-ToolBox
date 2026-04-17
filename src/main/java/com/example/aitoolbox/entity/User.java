@@ -3,6 +3,7 @@ package com.example.aitoolbox.entity;
 import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
 import java.time.LocalDateTime;
+import java.math.BigDecimal;
 
 @Data
 @TableName("user")
@@ -15,11 +16,11 @@ public class User {
     private String email;
     private String password;
     private Integer status;
-    private String code;
+    private BigDecimal points;
 
-    @TableField(fill = FieldFill.INSERT)
+    @TableField(fill = FieldFill.INSERT, value = "created_at")
     private LocalDateTime createdAt;
 
-    @TableField(fill = FieldFill.INSERT_UPDATE)
+    @TableField(fill = FieldFill.INSERT_UPDATE, value = "updated_at")
     private LocalDateTime updatedAt;
 }

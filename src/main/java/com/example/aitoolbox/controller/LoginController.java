@@ -22,9 +22,13 @@ public class LoginController {
 
     @Operation(summary = "用户注册", description = "用户注册接口，需要提供用户名、邮箱、密码和验证码")
     @PostMapping("/reg")
-    public R<Object> register(@Parameter(description = "用户信息，包含用户名、邮箱、密码和验证码") @RequestBody User user){
+    public R<Object> register(@RequestParam String username, @RequestParam String email, @RequestParam String password, @RequestParam String code){
         try {
-            loginService.register(user);
+            User user = new User();
+            user.setUsername(username);
+            user.setEmail(email);
+            user.setPassword(password);
+            loginService.register(user, code);
         }catch (Exception e){
             return R.fail(e.getMessage());
         }
@@ -65,7 +69,6 @@ public class LoginController {
             User user = loginService.login(usernameOrEmail, password, code);
             // 清除敏感信息
             user.setPassword(null);
-            user.setCode(null);
             return R.ok(user);
         }catch (Exception e){
             return R.fail(e.getMessage());

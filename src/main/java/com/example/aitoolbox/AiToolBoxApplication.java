@@ -1,6 +1,9 @@
 package com.example.aitoolbox;
 
+import com.example.aitoolbox.util.DoubaoAiClient;
 import org.mybatis.spring.annotation.MapperScan;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
@@ -8,9 +11,14 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
+import javax.annotation.PreDestroy;
+
 @SpringBootApplication
 @MapperScan("com.example.aitoolbox.mapper")
 public class AiToolBoxApplication {
+
+    @Autowired
+    private DoubaoAiClient doubaoAiClient;
 
     public static void main(String[] args) {
         SpringApplication.run(AiToolBoxApplication.class, args);
@@ -28,5 +36,13 @@ public class AiToolBoxApplication {
         source.registerCorsConfiguration("/**", corsConfiguration);
         
         return new CorsFilter(source);
+    }
+
+    @PreDestroy
+    public void shutdown() {
+        // 在应用关闭时调用DoubaoAiClient的shutdown方法
+        if (doubaoAiClient != null) {
+            doubaoAiClient.shutdown();
+        }
     }
 }

@@ -10,20 +10,20 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
-@TableName("`order`")
-public class Order {
+@TableName("card_key")
+public class CardKey {
     @TableId(type = IdType.AUTO)
     private Long id;
-    @TableField("order_no")
-    private String orderNo;
+    @TableField("key_code")
+    private String keyCode;
+    private BigDecimal points;
+    private Integer status;
+    @TableField("expire_time")
+    private LocalDateTime expireTime;
     @TableField("user_id")
     private Long userId;
-    @TableField("membership_id")
-    private Long membershipId;
-    private BigDecimal amount;
-    private Integer status;
-    @TableField("payment_time")
-    private LocalDateTime paymentTime;
+    @TableField("used_time")
+    private LocalDateTime usedTime;
     @TableField("created_at")
     private LocalDateTime createdAt;
     @TableField("updated_at")

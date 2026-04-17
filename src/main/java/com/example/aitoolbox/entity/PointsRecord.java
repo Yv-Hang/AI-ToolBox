@@ -10,22 +10,16 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
-@TableName("`order`")
-public class Order {
+@TableName("points_record")
+public class PointsRecord {
     @TableId(type = IdType.AUTO)
     private Long id;
-    @TableField("order_no")
-    private String orderNo;
     @TableField("user_id")
     private Long userId;
-    @TableField("membership_id")
-    private Long membershipId;
+    private Integer type;
     private BigDecimal amount;
-    private Integer status;
-    @TableField("payment_time")
-    private LocalDateTime paymentTime;
+    private BigDecimal balance;
+    private String remark;
     @TableField("created_at")
     private LocalDateTime createdAt;
-    @TableField("updated_at")
-    private LocalDateTime updatedAt;
 }

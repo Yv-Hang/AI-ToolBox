@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS `user` (
   `email` VARCHAR(100) NOT NULL COMMENT '邮箱，用于登录和找回密码',
   `password` VARCHAR(100) NOT NULL COMMENT '密码，MD5加密存储',
   `status` INT(11) NOT NULL DEFAULT 1 COMMENT '用户状态：1-正常，0-禁用',
+  `points` DECIMAL(10,2) NOT NULL DEFAULT 0 COMMENT '积分余额',
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`id`),
@@ -60,8 +61,8 @@ CREATE TABLE IF NOT EXISTS `user_membership` (
   `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_user_id` (`user_id`) COMMENT '每个用户只能有一条会员记录',
-  FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE COMMENT '用户删除时级联删除',
-  FOREIGN KEY (`membership_id`) REFERENCES `membership_info` (`id`) ON DELETE CASCADE COMMENT '会员套餐删除时级联删除'
+  FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`membership_id`) REFERENCES `membership_info` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户会员表';
 
 -- ===============================================
@@ -80,8 +81,8 @@ CREATE TABLE IF NOT EXISTS `order` (
   `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_order_no` (`order_no`) COMMENT '订单号唯一索引',
-  FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE COMMENT '用户删除时级联删除',
-  FOREIGN KEY (`membership_id`) REFERENCES `membership_info` (`id`) ON DELETE CASCADE COMMENT '会员套餐删除时级联删除'
+  FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`membership_id`) REFERENCES `membership_info` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='订单表';
 
 -- ===============================================
@@ -97,26 +98,87 @@ CREATE TABLE IF NOT EXISTS `ai_chat_history` (
   `tokens` INT(11) NOT NULL DEFAULT 0 COMMENT '消耗的token数量',
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   PRIMARY KEY (`id`),
-  FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE COMMENT '用户删除时级联删除',
+  FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE,
   INDEX `idx_user_id` (`user_id`) COMMENT '用户ID索引，加速查询用户的对话历史',
   INDEX `idx_created_at` (`created_at`) COMMENT '创建时间索引，加速按时间查询'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='AI对话历史表';
 
 -- ===============================================
--- 用户每日使用次数表
--- 存储普通用户每日使用AI的次数限制
+-- 积分变动记录表
+-- 记录用户积分的增减历史
 -- ===============================================
-CREATE TABLE IF NOT EXISTS `user_daily_usage` (
-  `id` BIGINT(20) NOT NULL AUTO_INCREMENT COMMENT '记录ID，自增主键',
-  `user_id` BIGINT(20) NOT NULL COMMENT '用户ID，关联user表',
-  `date` DATE NOT NULL COMMENT '日期，按天统计',
-  `usage_count` INT(11) NOT NULL DEFAULT 0 COMMENT '当日使用次数',
+CREATE TABLE IF NOT EXISTS `points_record` (
+  `id` BIGINT(20) NOT NULL AUTO_INCREMENT,
+  `user_id` BIGINT(20) NOT NULL COMMENT '用户ID',
+  `type` INT(11) NOT NULL COMMENT '类型：1-卡密兑换，2-订单支付，3-AI服务扣费',
+  `amount` DECIMAL(10,2) NOT NULL COMMENT '变动金额',
+  `balance` DECIMAL(10,2) NOT NULL COMMENT '变动后余额',
+  `remark` VARCHAR(255) DEFAULT NULL COMMENT '备注',
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  PRIMARY KEY (`id`),
+  KEY `idx_user_id` (`user_id`),
+  CONSTRAINT `fk_points_record_user` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='积分变动记录表';
+
+-- ===============================================
+-- 小红书文案生成记录表
+-- 记录用户生成的小红书文案
+-- ===============================================
+CREATE TABLE IF NOT EXISTS `xiaohongshu_copywriting` (
+  `id` BIGINT(20) NOT NULL AUTO_INCREMENT,
+  `user_id` BIGINT(20) NOT NULL COMMENT '用户ID',
+  `original_prompt` TEXT NOT NULL COMMENT '原始提示词',
+  `optimized_prompt` TEXT NOT NULL COMMENT '优化后提示词',
+  `generated_content` TEXT COMMENT '生成的文案内容',
+  `status` INT(11) NOT NULL DEFAULT 0 COMMENT '状态：0-失败，1-成功',
+  `error_message` VARCHAR(255) DEFAULT NULL COMMENT '错误信息',
+  `total_tokens` BIGINT(20) DEFAULT NULL COMMENT '总Token数',
+  `prompt_tokens` BIGINT(20) DEFAULT NULL COMMENT '输入Token数',
+  `completion_tokens` BIGINT(20) DEFAULT NULL COMMENT '输出Token数',
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_user_date` (`user_id`, `date`) COMMENT '每个用户每天只能有一条记录',
-  FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE COMMENT '用户删除时级联删除'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户每日使用次数表';
+  KEY `idx_user_id` (`user_id`),
+  KEY `idx_created_at` (`created_at`),
+  CONSTRAINT `fk_xiaohongshu_copywriting_user` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='小红书文案生成记录表';
+
+-- ===============================================
+-- 卡密表
+-- 存储可兑换积分的卡密
+-- ===============================================
+CREATE TABLE IF NOT EXISTS `card_key` (
+  `id` BIGINT(20) NOT NULL AUTO_INCREMENT,
+  `key_code` VARCHAR(100) NOT NULL COMMENT '卡密编码',
+  `points` DECIMAL(10,2) NOT NULL COMMENT '积分值',
+  `status` INT(11) NOT NULL DEFAULT 1 COMMENT '状态：1-未使用，2-已使用，3-已过期',
+  `expire_time` DATETIME DEFAULT NULL COMMENT '过期时间',
+  `user_id` BIGINT(20) DEFAULT NULL COMMENT '使用用户ID',
+  `used_time` DATETIME DEFAULT NULL COMMENT '使用时间',
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_key_code` (`key_code`),
+  KEY `idx_user_id` (`user_id`),
+  CONSTRAINT `fk_card_key_user` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='卡密表';
+
+-- ===============================================
+-- AI模型表
+-- 存储可用的AI模型信息
+-- ===============================================
+CREATE TABLE IF NOT EXISTS `ai_model` (
+  `id` BIGINT(20) NOT NULL AUTO_INCREMENT,
+  `name` VARCHAR(50) NOT NULL COMMENT '模型名称',
+  `code` VARCHAR(50) NOT NULL COMMENT '模型代码',
+  `description` TEXT COMMENT '模型描述',
+  `price_per_1000_tokens` DECIMAL(10,6) NOT NULL COMMENT '每1000 tokens的价格',
+  `status` INT(11) NOT NULL DEFAULT 1 COMMENT '状态：1-启用，0-禁用',
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_code` (`code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='AI模型表';
 
 -- ===============================================
 -- 初始化数据
@@ -130,8 +192,15 @@ INSERT INTO `membership_info` (`name`, `price`, `duration`, `description`) VALUE
 
 -- 初始化测试用户数据
 -- 密码：123456（MD5加密后的值）
-INSERT INTO `user` (`username`, `email`, `password`, `status`) VALUES
-('testuser', 'test@example.com', 'e10adc3949ba59abbe56e057f20f883e', 1);
+INSERT INTO `user` (`username`, `email`, `password`, `status`, `points`) VALUES
+('testuser', 'test@example.com', 'e10adc3949ba59abbe56e057f20f883e', 1, 100.00);
+
+-- 初始化AI模型数据
+INSERT INTO `ai_model` (`name`, `code`, `description`, `price_per_1000_tokens`, `status`) VALUES
+('GPT-3.5 Turbo', 'gpt-3.5-turbo', 'OpenAI的GPT-3.5 Turbo模型，适合一般的文案生成任务', 0.0015, 1),
+('GPT-4', 'gpt-4', 'OpenAI的GPT-4模型，适合更复杂的文案生成任务', 0.03, 1),
+('GPT-4o', 'gpt-4o', 'OpenAI的GPT-4o模型，结合了GPT-4的能力和更快的速度', 0.005, 1),
+('豆包', 'doubao', '字节跳动的豆包模型，适合中文文案生成', 0.002, 1);
 
 -- ===============================================
 -- 脚本执行完成

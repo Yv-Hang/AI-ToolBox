@@ -7,7 +7,7 @@ public interface LoginService {
     
     void sendLoginCode(String email);
 
-    void register(User user);
+    void register(User user, String code);
     
     User login(String usernameOrEmail, String password, String code);
 }

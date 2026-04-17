@@ -49,9 +49,9 @@ public class LoginServiceImpl implements LoginService {
     }
 
     @Override
-    public void register(User user) {
+    public void register(User user, String code) {
         String redisCode = redisTemplate.opsForValue().get(RegisterCodeKey+user.getEmail());
-        if (!redisCode.equals(user.getCode())){
+        if (!redisCode.equals(code)){
             throw new RuntimeException("验证码错误！");
         }
         
@@ -69,8 +69,6 @@ public class LoginServiceImpl implements LoginService {
         user.setId(snowflake.nextId());
         // 加密密码
         user.setPassword(SecureUtil.md5(user.getPassword()));
-        // 清除验证码
-        user.setCode(null);
         // 设置默认状态
         user.setStatus(1);
         
