@@ -135,6 +135,7 @@ public class AiServiceImpl implements AiService {
 
         // 2. 保存生成记录（初始状态）
         com.example.aitoolbox.entity.XiaohongshuCopywriting record = new com.example.aitoolbox.entity.XiaohongshuCopywriting();
+        System.out.println("当前用户ID"+userId);
         record.setUserId(userId);
         record.setOriginalPrompt(prompt);
         record.setOptimizedPrompt(prompt);

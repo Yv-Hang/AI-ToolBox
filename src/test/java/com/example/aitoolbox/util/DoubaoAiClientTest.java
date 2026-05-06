@@ -32,8 +32,6 @@ public class DoubaoAiClientTest {
         // 在实际运行时，由于没有配置API密钥，这个测试会失败
         // 但我们可以验证方法结构是否正确
         ReflectionTestUtils.setField(doubaoAiClient, "apiKey", "test_api_key");
-        ReflectionTestUtils.setField(doubaoAiClient, "apiUrl", "https://ark.cn-beijing.volces.com/api/v3/chat/completions");
-        ReflectionTestUtils.setField(doubaoAiClient, "model", "ep-20260416102329-n4q9l");
 
         // 验证方法存在且能被调用（虽然会抛出异常）
         assertThrows(Exception.class, () -> {

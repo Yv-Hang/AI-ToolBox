@@ -65,8 +65,10 @@ public class LoginServiceImpl implements LoginService {
             throw new RuntimeException("用户名已被使用！");
         }
         
-        // 生成雪花算法ID
-        user.setId(snowflake.nextId());
+        // 生成雪花算法ID并截取后10位作为用户ID
+        long snowflakeId = snowflake.nextId(); 
+        long shortId = snowflakeId % 10000000000L; // 截取后10位
+        user.setId(shortId);
         // 加密密码
         user.setPassword(SecureUtil.md5(user.getPassword()));
         // 设置默认状态
