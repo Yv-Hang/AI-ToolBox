@@ -42,10 +42,11 @@ public interface AiService {
      * @param style 目标风格
      * @param wordCount 字数
      * @param count 生成条数
+     * @param language 语言
      * @param model 使用的模型
      * @return 生成结果
      */
-    Map<String, Object> generateCopywriting(Long userId, String purpose, String keywords, String style, int wordCount, int count, String model);
+    Map<String, Object> generateCopywriting(Long userId, String purpose, String keywords, String style, int wordCount, int count, String language, String model);
 
     /**
      * 新增AI模型

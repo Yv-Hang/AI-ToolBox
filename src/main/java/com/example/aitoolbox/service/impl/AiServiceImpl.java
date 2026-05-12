@@ -117,7 +117,7 @@ public class AiServiceImpl implements AiService {
     }
 
     @Override
-    public Map<String, Object> generateCopywriting(Long userId, String purpose, String keywords, String style, int wordCount, int count, String model) {
+    public Map<String, Object> generateCopywriting(Long userId, String purpose, String keywords, String style, int wordCount, int count, String language, String model) {
         Map<String, Object> result = new HashMap<>();
 
         // 1. 构建提示词模板
@@ -125,6 +125,7 @@ public class AiServiceImpl implements AiService {
                 "【用途】：" + purpose + "\n" +
                 "【关键词】：" + keywords + "\n" +
                 "【风格】：" + style + "\n" +
+                "【语言】：" + language + "\n" +
                 "【要求】：\n" +
                 "- 字数：" + wordCount + "\n" +
                 "- 生成条数：" + count + "\n" +

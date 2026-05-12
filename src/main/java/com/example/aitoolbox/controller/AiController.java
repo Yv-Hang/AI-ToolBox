@@ -58,8 +58,9 @@ public class AiController {
             @Parameter(description = "目标风格", required = true) @RequestParam String style,
             @Parameter(description = "字数", required = true) @RequestParam int wordCount,
             @Parameter(description = "生成条数", required = true) @RequestParam int count,
+            @Parameter(description = "语言（默认简体中文）", required = false) @RequestParam(defaultValue = "简体中文") String language,
             @Parameter(description = "使用的模型", required = true) @RequestParam String model) {
-        return aiService.generateCopywriting(userId, purpose, keywords, style, wordCount, count, model);
+        return aiService.generateCopywriting(userId, purpose, keywords, style, wordCount, count, language, model);
     }
 
     @Operation(summary = "新增AI模型", description = "添加新的AI模型到系统")
